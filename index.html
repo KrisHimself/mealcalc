@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Meal Prep Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3345;
+    --text: #e4e6ed;
+    --text-dim: #8b8fa3;
+    --accent: #6c8cff;
+    --accent-dim: #4a62b3;
+    --k-color: #ff7a5c;
+    --l-color: #5ce0d8;
+    --radius: 12px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  html { font-size: 16px; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    padding: 0 0 2rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    backdrop-filter: blur(12px);
+  }
+
+  header h1 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 1rem 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+  }
+
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .row {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    color: var(--text);
+    font-size: 1rem;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+
+  input[type="number"]:focus {
+    border-color: var(--accent);
+  }
+
+  .person-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .person-row:last-child { margin-bottom: 0; }
+
+  .person-badge {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .badge-k { background: var(--k-color); color: #1a1d27; }
+  .badge-l { background: var(--l-color); color: #1a1d27; }
+
+  .person-row .field { flex: 1; }
+
+  .person-row input {
+    width: 100%;
+  }
+
+  .tare-section { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .tare-input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .tare-input-row .field { flex: 1; }
+
+  .tare-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-family: var(--font);
+    user-select: none;
+  }
+
+  .chip:active, .chip.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .chip .chip-weight {
+    color: var(--text);
+    font-weight: 600;
+    margin-left: 0.15rem;
+  }
+
+  .results-card {
+    border-color: var(--accent-dim);
+    background: linear-gradient(135deg, var(--surface) 0%, #1c2035 100%);
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .result-grid.full { grid-template-columns: 1fr; }
+
+  .result-box {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 0.7rem 0.8rem;
+    text-align: center;
+  }
+
+  .result-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.25rem;
+  }
+
+  .result-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .result-unit {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    margin-left: 0.1rem;
+  }
+
+  .result-k .result-value { color: var(--k-color); }
+  .result-l .result-value { color: var(--l-color); }
+
+  .placeholder-msg {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    padding: 1rem 0;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 0.5rem 0;
+  }
+
+  @media (min-width: 600px) {
+    .container { padding: 1.5rem 1.5rem 0; }
+    .card { padding: 1.25rem 1.35rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Meal Prep Calc</h1>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">People &amp; Days</div>
+    <div class="person-row">
+      <div class="person-badge badge-k">K</div>
+      <div class="field">
+        <label for="kcal-k">kcal / portion</label>
+        <input type="number" id="kcal-k" value="750" inputmode="numeric">
+      </div>
+    </div>
+    <div class="person-row">
+      <div class="person-badge badge-l">L</div>
+      <div class="field">
+        <label for="kcal-l">kcal / portion</label>
+        <input type="number" id="kcal-l" value="425" inputmode="numeric">
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="field" style="margin-top:0.4rem;">
+      <label for="days">Meal prep days</label>
+      <input type="number" id="days" value="4" inputmode="numeric" min="1">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Weight</div>
+    <div class="tare-section">
+      <div class="row">
+        <div class="field">
+          <label for="gross">Gross weight (g)</label>
+          <input type="number" id="gross" placeholder="e.g. 4000" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label for="tare">Tare (g)</label>
+          <input type="number" id="tare" placeholder="e.g. 930" inputmode="numeric">
+        </div>
+      </div>
+      <label style="margin-top:0.2rem;">Quick tare</label>
+      <div class="tare-chips" id="tare-chips"></div>
+    </div>
+  </div>
+
+  <div class="card results-card" id="results-card">
+    <div class="card-title">Results</div>
+    <div id="results-body">
+      <p class="placeholder-msg">Enter gross weight and tare to see portions.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TARE_ITEMS = [
+  { name: 'Big pot', weight: 930 },
+  { name: 'Med pot', weight: 750 },
+  { name: 'Sm pot', weight: 592 },
+  { name: 'Big bowl', weight: 208 },
+  { name: 'Med bowl', weight: 159 },
+  { name: 'Sm bowl', weight: 110 },
+  { name: '32cm SS pan', weight: 1990 },
+  { name: '28cm SS pan', weight: 1752 },
+  { name: '24cm teflon pan', weight: 594 },
+];
+
+const $ = id => document.getElementById(id);
+const chipsEl = $('tare-chips');
+let activeChip = null;
+
+TARE_ITEMS.forEach((item, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'chip';
+  btn.innerHTML = `${item.name} <span class="chip-weight">${item.weight}g</span>`;
+  btn.addEventListener('click', () => {
+    if (activeChip === i) {
+      activeChip = null;
+      btn.classList.remove('active');
+      $('tare').value = '';
+    } else {
+      chipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      activeChip = i;
+      btn.classList.add('active');
+      $('tare').value = item.weight;
+    }
+    calc();
+  });
+  chipsEl.appendChild(btn);
+});
+
+$('tare').addEventListener('input', () => {
+  chipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  const val = parseFloat($('tare').value);
+  TARE_ITEMS.forEach((item, i) => {
+    if (item.weight === val) {
+      chipsEl.children[i].classList.add('active');
+      activeChip = i;
+    }
+  });
+  calc();
+});
+
+['kcal-k', 'kcal-l', 'days', 'gross'].forEach(id => {
+  $(id).addEventListener('input', calc);
+});
+
+function calc() {
+  const kcalK = parseFloat($('kcal-k').value) || 0;
+  const kcalL = parseFloat($('kcal-l').value) || 0;
+  const days = parseInt($('days').value) || 0;
+  const gross = parseFloat($('gross').value);
+  const tare = parseFloat($('tare').value);
+
+  const body = $('results-body');
+
+  if (isNaN(gross) || isNaN(tare) || days <= 0) {
+    body.innerHTML = '<p class="placeholder-msg">Enter gross weight and tare to see portions.</p>';
+    return;
+  }
+
+  const net = gross - tare;
+  if (net <= 0) {
+    body.innerHTML = '<p class="placeholder-msg">Net weight must be positive.</p>';
+    return;
+  }
+
+  const totalKcal = kcalK + kcalL;
+  if (totalKcal <= 0) {
+    body.innerHTML = '<p class="placeholder-msg">Set at least one person\'s kcal.</p>';
+    return;
+  }
+
+  const perDay = net / days;
+  const ratio = perDay / totalKcal;
+  const portionK = ratio * kcalK;
+  const portionL = ratio * kcalL;
+
+  const fmt = v => v % 1 === 0 ? v.toString() : v.toFixed(1);
+
+  body.innerHTML = `
+    <div class="result-grid full">
+      <div class="result-box">
+        <div class="result-label">Net weight</div>
+        <div class="result-value">${fmt(net)}<span class="result-unit">g</span></div>
+      </div>
+    </div>
+    <div style="height:0.5rem"></div>
+    <div class="result-grid">
+      <div class="result-box">
+        <div class="result-label">Per day</div>
+        <div class="result-value">${fmt(perDay)}<span class="result-unit">g</span></div>
+      </div>
+      <div class="result-box">
+        <div class="result-label">g / kcal</div>
+        <div class="result-value">${ratio.toFixed(3)}</div>
+      </div>
+    </div>
+    <div style="height:0.5rem"></div>
+    <div class="result-grid">
+      <div class="result-box result-k">
+        <div class="result-label">K per day</div>
+        <div class="result-value">${fmt(portionK)}<span class="result-unit">g</span></div>
+      </div>
+      <div class="result-box result-l">
+        <div class="result-label">L per day</div>
+        <div class="result-value">${fmt(portionL)}<span class="result-unit">g</span></div>
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
