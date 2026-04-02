@@ -287,6 +287,80 @@
     gap: 0.6rem;
   }
 
+  .formula-toggle {
+    margin-top: 0.75rem;
+    border: none;
+    background: none;
+    width: 100%;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .formula-toggle::-webkit-details-marker { display: none; }
+  .formula-toggle::marker { content: ''; }
+
+  .formula-toggle summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0.3rem 0;
+    transition: opacity 0.15s;
+    list-style: none;
+  }
+
+  .formula-toggle summary::-webkit-details-marker { display: none; }
+  .formula-toggle summary::marker { content: ''; }
+
+  .formula-toggle summary:hover,
+  .formula-toggle summary:active { opacity: 0.8; }
+
+  .formula-toggle summary .arrow {
+    display: inline-block;
+    transition: transform 0.2s;
+    font-size: 0.6rem;
+  }
+
+  .formula-toggle[open] summary .arrow { transform: rotate(180deg); }
+
+  .formula-body {
+    margin-top: 0.6rem;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 0.75rem 0.85rem;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: var(--text-dim);
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+
+  .formula-body .f-label {
+    color: var(--text-dim);
+    opacity: 0.7;
+  }
+
+  .formula-body .f-val {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .formula-body .f-op {
+    color: var(--accent);
+    margin: 0 0.15rem;
+  }
+
+  .formula-body .f-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.4rem 0;
+  }
+
   @media (min-width: 600px) {
     .container { padding: 1.5rem 1.5rem 0; }
     .card { padding: 1.25rem 1.35rem; }
@@ -501,6 +575,15 @@ function calc() {
     })
     .join('');
 
+  const portionFormulas = people
+    .filter(p => p.kcal > 0)
+    .map(p => {
+      const portion = ratio * p.kcal;
+      const label = p.name || '?';
+      return `<span class="f-label">${label}</span> <span class="f-op">=</span> <span class="f-val">${ratio.toFixed(3)}</span> <span class="f-op">×</span> <span class="f-val">${p.kcal}</span> <span class="f-op">=</span> <span class="f-val">${fmt(portion)}g</span>`;
+    })
+    .join('<br>');
+
   body.innerHTML = `
     <div class="result-grid full">
       <div class="result-box">
@@ -521,6 +604,17 @@ function calc() {
     </div>
     <div style="height:0.5rem"></div>
     <div class="portions-grid">${portionBoxes}</div>
+    <details class="formula-toggle">
+      <summary>Show formula <span class="arrow">▼</span></summary>
+      <div class="formula-body">
+        <span class="f-label">net</span> <span class="f-op">=</span> <span class="f-val">${fmt(gross)}</span> <span class="f-op">−</span> <span class="f-val">${fmt(tare)}</span> <span class="f-op">=</span> <span class="f-val">${fmt(net)}g</span><br>
+        <span class="f-label">per day</span> <span class="f-op">=</span> <span class="f-val">${fmt(net)}</span> <span class="f-op">÷</span> <span class="f-val">${days}</span> <span class="f-op">=</span> <span class="f-val">${fmt(perDay)}g</span><br>
+        <span class="f-label">total kcal</span> <span class="f-op">=</span> ${people.filter(p => p.kcal > 0).map(p => `<span class="f-val">${p.kcal}</span>`).join(' <span class="f-op">+</span> ')} <span class="f-op">=</span> <span class="f-val">${totalKcal}</span><br>
+        <span class="f-label">ratio</span> <span class="f-op">=</span> <span class="f-val">${fmt(perDay)}</span> <span class="f-op">÷</span> <span class="f-val">${totalKcal}</span> <span class="f-op">=</span> <span class="f-val">${ratio.toFixed(3)} g/kcal</span>
+        <hr class="f-divider">
+        ${portionFormulas}
+      </div>
+    </details>
   `;
 }
 
