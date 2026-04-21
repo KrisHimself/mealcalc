@@ -285,41 +285,24 @@
   .people-list { display: flex; flex-direction: column; }
 
   .fraction-wrap {
-    margin-top: 0.65rem;
-    padding-top: 0.65rem;
+    margin-top: 0.55rem;
+    padding-top: 0.55rem;
     border-top: 1px solid var(--border);
   }
 
-  .fraction-title {
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.45rem;
+  .fraction-wrap .formula-toggle summary {
+    opacity: 0.45;
+    padding: 0.2rem 0;
   }
 
-  .fraction-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.45rem;
-  }
+  .fraction-wrap .formula-toggle summary:hover,
+  .fraction-wrap .formula-toggle summary:active { opacity: 0.75; }
 
-  .fraction-item {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.45rem 0.55rem;
-  }
-
-  .fraction-name {
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    margin-bottom: 0.2rem;
-  }
-
-  .fraction-value {
-    font-size: 0.92rem;
-    font-weight: 600;
+  .fraction-wrap .formula-body {
+    margin-top: 0.45rem;
+    font-size: 0.74rem;
+    line-height: 1.6;
+    opacity: 0.88;
   }
 
   .portions-grid {
@@ -426,8 +409,10 @@
       <input type="number" id="days" value="4" inputmode="numeric" min="1">
     </div>
     <div class="fraction-wrap">
-      <div class="fraction-title">Per-meal fraction (kcal only)</div>
-      <div id="meal-fractions" class="fraction-grid"></div>
+      <details class="formula-toggle">
+        <summary>Show fractions <span class="arrow">▼</span></summary>
+        <div id="meal-fractions" class="formula-body"></div>
+      </details>
     </div>
   </div>
 
@@ -669,7 +654,7 @@ function renderMealFractions(days) {
   const totalKcal = people.reduce((sum, person) => sum + person.kcal, 0);
 
   if (days <= 0 || totalKcal <= 0) {
-    container.innerHTML = '<div class="fraction-item"><div class="fraction-name">Set kcal and days</div><div class="fraction-value">-</div></div>';
+    container.innerHTML = '<span class="f-label">Set kcal and days</span>';
     return;
   }
 
@@ -679,14 +664,15 @@ function renderMealFractions(days) {
     .map(person => {
       const fraction = person.kcal / totalPrepKcal;
       const label = person.name || '?';
-      return `<div class="fraction-item">
-        <div class="fraction-name">${label}</div>
-        <div class="fraction-value">${fraction.toFixed(6)}</div>
-      </div>`;
+      return `<span class="f-label">${label}</span> <span class="f-op">=</span> <span class="f-val">${person.kcal}</span> <span class="f-op">÷</span> <span class="f-val">${totalPrepKcal}</span> <span class="f-op">=</span> <span class="f-val">${fraction.toFixed(6)}</span>`;
     })
-    .join('');
+    .join('<br>');
 
-  container.innerHTML = rows || '<div class="fraction-item"><div class="fraction-name">No active people</div><div class="fraction-value">-</div></div>';
+  container.innerHTML = `
+    <span class="f-label">total prep kcal</span> <span class="f-op">=</span> <span class="f-val">${totalKcal}</span> <span class="f-op">×</span> <span class="f-val">${days}</span> <span class="f-op">=</span> <span class="f-val">${totalPrepKcal}</span>
+    <hr class="f-divider">
+    ${rows || '<span class="f-label">No active people</span>'}
+  `;
 }
 
 renderPeople();
