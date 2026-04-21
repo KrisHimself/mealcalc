@@ -105,7 +105,10 @@
     transition: border-color 0.15s;
   }
 
-  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
 
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
@@ -281,6 +284,44 @@
 
   .people-list { display: flex; flex-direction: column; }
 
+  .fraction-wrap {
+    margin-top: 0.65rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .fraction-title {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.45rem;
+  }
+
+  .fraction-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.45rem;
+  }
+
+  .fraction-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .fraction-name {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-bottom: 0.2rem;
+  }
+
+  .fraction-value {
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+
   .portions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -384,6 +425,10 @@
       <label for="days">Meal prep days</label>
       <input type="number" id="days" value="4" inputmode="numeric" min="1">
     </div>
+    <div class="fraction-wrap">
+      <div class="fraction-title">Per-meal fraction (kcal only)</div>
+      <div id="meal-fractions" class="fraction-grid"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -435,7 +480,7 @@ const TARE_ITEMS = [
 const $ = id => document.getElementById(id);
 
 let people = [
-  { name: 'K', kcal: 750 },
+  { name: 'K', kcal: 820 },
   { name: 'L', kcal: 425 },
 ];
 let colorIndex = people.length;
@@ -540,6 +585,7 @@ function calc() {
   const gross = parseFloat($('gross').value);
   const tare = parseFloat($('tare').value);
   const body = $('results-body');
+  renderMealFractions(days);
 
   if (isNaN(gross) || isNaN(tare) || days <= 0) {
     body.innerHTML = '<p class="placeholder-msg">Enter gross weight and tare to see portions.</p>';
@@ -618,10 +664,36 @@ function calc() {
   `;
 }
 
+function renderMealFractions(days) {
+  const container = $('meal-fractions');
+  const totalKcal = people.reduce((sum, person) => sum + person.kcal, 0);
+
+  if (days <= 0 || totalKcal <= 0) {
+    container.innerHTML = '<div class="fraction-item"><div class="fraction-name">Set kcal and days</div><div class="fraction-value">-</div></div>';
+    return;
+  }
+
+  const totalPrepKcal = totalKcal * days;
+  const rows = people
+    .filter(person => person.kcal > 0)
+    .map(person => {
+      const fraction = person.kcal / totalPrepKcal;
+      const label = person.name || '?';
+      return `<div class="fraction-item">
+        <div class="fraction-name">${label}</div>
+        <div class="fraction-value">${fraction.toFixed(6)}</div>
+      </div>`;
+    })
+    .join('');
+
+  container.innerHTML = rows || '<div class="fraction-item"><div class="fraction-name">No active people</div><div class="fraction-value">-</div></div>';
+}
+
 renderPeople();
 $('gross').value = '';
 $('tare').value = '';
 $('days').value = 4;
+calc();
 </script>
 </body>
 </html>
